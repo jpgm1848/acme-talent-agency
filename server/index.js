@@ -13,6 +13,8 @@ const {
 const express = require("express");
 const app = express();
 
+app.use(express.json());
+
 app.get("/api/skills", async (req, res, next) => {
   try {
     res.send(await fetchSkills());
@@ -37,6 +39,40 @@ app.get("/api/users/:id/userSkills", async (req, res, next) => {
   }
 });
 
+app.delete("/api/users/:userId/userSkills/:id", async (req, res, next) => {
+  try {
+    await destroyUserSkill({
+      user_id: req.params.userId,
+      id: req.params.id,
+    });
+    res.sendStatus(204);
+  } catch (ex) {
+    next(ex);
+  }
+});
+
+app.use((err, req, res, next) => {
+  console.log(err);
+  res.status(err.status || 500).send({ error: err.message || err });
+});
+
+app.post("/api/users/:userId/userSkills", async (req, res, next) => {
+  try {
+    const userSkill = await createUserSkill({
+      user_id: req.params.userId,
+      skill_id: req.body.skill_id,
+    });
+    res.status(201).send(userSkill);
+  } catch (ex) {
+    next(ex);
+  }
+});
+
+app.use((err, req, res, next) => {
+  console.log(err);
+  res.status(err.status || 500).send({ error: err.message || err });
+});
+
 const init = async () => {
   console.log("connecting to database");
   await client.connect();
@@ -45,8 +81,8 @@ const init = async () => {
   console.log("tables created");
   const [
     paul,
-    leto,
-    jessica,
+    gurney,
+    thufir,
     weirding,
     voice,
     shieldcombat,
@@ -79,6 +115,12 @@ const init = async () => {
     console.log(`curl localhost:${port}/api/skills`);
     console.log(`curl localhost:${port}/api/users`);
     console.log(`curl localhost:${port}/api/users/${paul.id}/userSkills`);
+    console.log(
+      `curl -X DELETE localhost:${port}/api/users/${paul.id}/userSkills/${paulVoices.id}`
+    );
+    console.log(
+      `curl -X POST localhost:${port}/api/users/${gurney.id}/userSkills -d '{"skill_id": "${shieldcombat.id}"}' -H "Content-Type:application/json"`
+    );
   });
 };
 
